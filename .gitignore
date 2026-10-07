@@ -1,0 +1,15 @@
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.plan.txt
+crash.log
+crash.*.log
+*.auto.tfvars
+*.auto.tfvars.json
+*.local.hcl
+*.pem
+*.key
+.env
+.DS_Store
+__pycache__/

@@ -1,0 +1,51 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_REF_PROTECTED == "true"'
+    - when: never
+
+stages: [plan, apply]
+
+variables:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  DEPLOY_ENV:
+    value: dev
+    options: [dev, stage, prod]
+    description: "Среда для plan и ручного apply"
+
+default:
+  image:
+    name: hashicorp/terraform:1.15.8
+    entrypoint: [""]
+  before_script:
+    - export TF_CLI_CONFIG_FILE="$CI_PROJECT_DIR/Task2Advanced/terraform.rc"
+  interruptible: false
+
+plan:
+  stage: plan
+  resource_group: terraform-$DEPLOY_ENV
+  environment:
+    name: $DEPLOY_ENV
+    action: prepare
+  script:
+    - sh Task2Advanced/scripts/terraform.sh plan "$DEPLOY_ENV"
+  artifacts:
+    access: maintainer
+    expire_in: 1 hour
+    paths:
+      - Task2Advanced/envs/$DEPLOY_ENV/deployment.tfplan
+      - Task2Advanced/envs/$DEPLOY_ENV/deployment.plan.txt
+
+apply:
+  stage: apply
+  resource_group: terraform-$DEPLOY_ENV
+  environment:
+    name: $DEPLOY_ENV
+    action: start
+  needs:
+    - job: plan
+      artifacts: true
+  when: manual
+  allow_failure: false
+  script:
+    - sh Task2Advanced/scripts/terraform.sh apply "$DEPLOY_ENV"
